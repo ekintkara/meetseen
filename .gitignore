@@ -1,0 +1,29 @@
+# Kişisel veri — ASLA repoya girmemeli (gerçek toplantı kayıtları/notları)
+meetseen-cikti/
+yuklenenler/
+test/*.wav
+test/test.mp4
+test/slaytlar/
+test/segments.txt
+test/qwen3/
+test/dilim-*
+
+# Proje içine bırakılabilecek token'lı config (~/.meetseen.json kullanın)
+meetseen.json
+
+# Derleme / ortam
+.venv/
+__pycache__/
+bin/
+*.pyc
+
+# Build çıktıları
+meetseen.app
+app/.build/
+app/.swiftpm/
+
+# Genel
+.DS_Store
+*.log
+.playwright-mcp/
+not-dump.txt

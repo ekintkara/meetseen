@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>meetseen</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%234f46e5'/%3E%3Ctext x='32' y='43' font-size='34' font-family='sans-serif' fill='white' text-anchor='middle' font-weight='700'%3Em%3C/text%3E%3C/svg%3E">
+<script src="/marked.min.js"></script>
+<style>
+  :root {
+    --bg: #f4f5f7; --card: #ffffff; --text: #1a1d23; --muted: #6b7280;
+    --accent: #4f46e5; --accent-soft: #eef0fe; --ok: #059669; --err: #dc2626;
+    --border: #e5e7eb; --log-bg: #0f172a; --log-fg: #cbd5e1; --shadow: 0 1px 3px rgba(0,0,0,.06), 0 8px 24px rgba(0,0,0,.05);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0b0d12; --card: #151922; --text: #e7e9ee; --muted: #9aa3b2;
+      --accent: #818cf8; --accent-soft: #232742; --ok: #34d399; --err: #f87171;
+      --border: #262c3a; --log-bg: #0a0e18; --shadow: 0 1px 3px rgba(0,0,0,.4);
+    }
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+         background: var(--bg); color: var(--text); }
+  header { display: flex; align-items: center; gap: 10px; padding: 18px 24px; max-width: 880px; margin: 0 auto; }
+  .logo { width: 30px; height: 30px; border-radius: 9px; background: linear-gradient(135deg, var(--accent), #a855f7);
+          display: grid; place-items: center; color: #fff; font-weight: 700; font-size: 15px; }
+  header h1 { font-size: 19px; margin: 0; font-weight: 700; letter-spacing: .2px; }
+  .badge { margin-left: auto; font-size: 12px; color: var(--muted); background: var(--card);
+           border: 1px solid var(--border); padding: 5px 11px; border-radius: 999px; }
+  main { max-width: 880px; margin: 0 auto 60px; padding: 0 16px; display: grid; gap: 18px; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 18px;
+          padding: 26px 28px; box-shadow: var(--shadow); }
+  h2 { margin: 0 0 6px; font-size: 17px; }
+  .hint { color: var(--muted); font-size: 13.5px; margin: 0 0 20px; line-height: 1.5; }
+  button { font: inherit; cursor: pointer; border: none; border-radius: 12px; padding: 12px 20px;
+           font-weight: 600; transition: filter .15s, transform .05s; }
+  button:active { transform: scale(.985); }
+  button:hover { filter: brightness(1.06); }
+  .primary { background: var(--accent); color: #fff; }
+  .big { font-size: 16px; padding: 14px 26px; width: 100%; }
+  .ghost { background: transparent; border: 1.5px solid var(--border); color: var(--text); }
+  .pick { display: flex; flex-direction: column; align-items: center; gap: 6px; width: 100%;
+          padding: 26px; font-size: 17px; }
+  .pick small { font-weight: 400; font-size: 12.5px; opacity: .8; }
+  .or { text-align: center; color: var(--muted); font-size: 12.5px; margin: 14px 0; }
+  #dropzone { border: 2px dashed var(--border); border-radius: 16px; padding: 26px; text-align: center;
+              color: var(--muted); font-size: 14px; transition: all .15s; }
+  #dropzone.drag { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+  #dropzone label { color: var(--accent); font-weight: 600; cursor: pointer; text-decoration: underline; }
+  details { margin-top: 14px; }
+  summary { color: var(--muted); font-size: 13px; cursor: pointer; }
+  .row { display: flex; gap: 10px; align-items: center; }
+  .row.grow input { flex: 1; }
+  input[type=text] { font: inherit; padding: 11px 14px; border: 1.5px solid var(--border);
+                     border-radius: 12px; background: var(--bg); color: var(--text); width: 100%; }
+  #file-card { display: flex; align-items: center; gap: 14px; background: var(--accent-soft);
+               border-radius: 14px; padding: 14px 16px; margin-top: 18px; }
+  #file-card .ic { font-size: 26px; }
+  #file-card b { display: block; font-size: 14.5px; word-break: break-all; }
+  #file-card span { font-size: 12.5px; color: var(--muted); }
+  #file-card button { margin-left: auto; padding: 8px 14px; font-size: 13px; }
+  label.field { display: block; font-size: 13.5px; font-weight: 600; margin: 18px 0 6px; }
+  .switch { display: flex; gap: 10px; align-items: center; font-size: 14px; margin: 16px 0 22px; cursor: pointer; }
+  .switch input { width: 38px; height: 22px; appearance: none; background: var(--border); border-radius: 999px;
+                  position: relative; cursor: pointer; transition: background .15s; flex: none; }
+  .switch input::after { content: ""; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px;
+                         border-radius: 50%; background: #fff; transition: left .15s; }
+  .switch input:checked { background: var(--accent); }
+  .switch input:checked::after { left: 19px; }
+  /* stepper */
+  .steps { display: flex; justify-content: space-between; margin: 8px 0 22px; }
+  .step { display: flex; flex-direction: column; align-items: center; gap: 7px; flex: 1; min-width: 0; }
+  .step .b { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center;
+             font-size: 14px; font-weight: 700; background: var(--bg); color: var(--muted);
+             border: 2px solid var(--border); transition: all .2s; }
+  .step span { font-size: 11.5px; color: var(--muted); text-align: center; }
+  .step.done .b { background: var(--ok); border-color: var(--ok); color: #fff; }
+  .step.done span { color: var(--ok); }
+  .step.active .b { border-color: var(--accent); color: var(--accent); animation: pulse 1.2s infinite; }
+  .step.active span { color: var(--accent); font-weight: 600; }
+  @keyframes pulse { 0%,100% { box-shadow: 0 0 0 0 rgba(129,140,248,.45);} 50% { box-shadow: 0 0 0 7px rgba(129,140,248,0);} }
+  .log { background: var(--log-bg); color: var(--log-fg); font: 12px/1.65 ui-monospace, "SF Mono", Menlo, monospace;
+         border-radius: 14px; padding: 14px 16px; height: 230px; overflow-y: auto; white-space: pre-wrap; word-break: break-all; }
+  .runfoot { display: flex; align-items: center; margin-top: 14px; gap: 12px; }
+  #elapsed { color: var(--muted); font-size: 13.5px; font-variant-numeric: tabular-nums; }
+  #btn-cancel { margin-left: auto; color: var(--err); border: 1.5px solid var(--err); background: transparent; padding: 9px 16px; font-size: 13.5px; }
+  .resulthead { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; flex-wrap: wrap; }
+  .resulthead .path { color: var(--muted); font-size: 12px; word-break: break-all; flex: 1 1 200px; }
+  /* markdown */
+  .markdown { margin-top: 16px; line-height: 1.65; font-size: 14.5px; }
+  .markdown h1 { font-size: 22px; margin: 18px 0 10px; }
+  .markdown h2 { font-size: 17px; margin: 22px 0 8px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+  .markdown table { border-collapse: collapse; width: 100%; margin: 10px 0; font-size: 13.5px; }
+  .markdown th, .markdown td { border: 1px solid var(--border); padding: 7px 10px; text-align: left; }
+  .markdown tr:nth-child(2n) td { background: var(--accent-soft); }
+  .markdown blockquote { margin: 8px 0; padding: 4px 14px; border-left: 3px solid var(--accent);
+                         color: var(--muted); background: var(--accent-soft); border-radius: 0 10px 10px 0; }
+  .markdown code { background: var(--accent-soft); border-radius: 6px; padding: 1.5px 6px; font-size: 13px; }
+  .markdown hr { border: none; border-top: 1px solid var(--border); margin: 18px 0; }
+  .markdown ul { padding-left: 22px; } .markdown li { margin: 4px 0; }
+  /* geçmiş */
+  #hist { list-style: none; margin: 0; padding: 0; }
+  #hist li { display: flex; align-items: center; gap: 12px; padding: 11px 6px; border-bottom: 1px solid var(--border); cursor: pointer; }
+  #hist li:last-child { border-bottom: none; }
+  #hist li:hover { background: var(--accent-soft); border-radius: 10px; }
+  #hist .nm { font-size: 13.5px; font-weight: 600; word-break: break-all; }
+  #hist .dt { color: var(--muted); font-size: 12px; margin-left: auto; white-space: nowrap; }
+  #hist .op { font-size: 15px; }
+  .empty { color: var(--muted); font-size: 13.5px; padding: 6px; }
+  #toast { position: fixed; bottom: 22px; right: 22px; background: var(--text); color: var(--bg);
+           padding: 12px 18px; border-radius: 12px; font-size: 13.5px; opacity: 0; transition: opacity .25s;
+           pointer-events: none; max-width: 340px; z-index: 10; }
+  #toast.show { opacity: .96; }
+  .errbox { background: rgba(220,38,38,.09); border: 1px solid var(--err); color: var(--err);
+            padding: 14px 16px; border-radius: 12px; font-size: 14px; margin-bottom: 8px; }
+  footer { max-width: 880px; margin: 0 auto 30px; padding: 0 16px; color: var(--muted); font-size: 12px; }
+  /* ayarlar modalı */
+  .modal { position: fixed; inset: 0; background: rgba(0,0,0,.45); display: grid; place-items: center; z-index: 20; }
+  .mcard { background: var(--card); border: 1px solid var(--border); border-radius: 18px;
+           width: min(600px, 92vw); max-height: 88vh; overflow-y: auto; padding: 26px 28px;
+           box-shadow: var(--shadow); }
+  select, textarea { font: inherit; padding: 10px 13px; border: 1.5px solid var(--border);
+                     border-radius: 12px; background: var(--bg); color: var(--text); width: 100%; }
+  textarea { min-height: 64px; resize: vertical; font-size: 13px; }
+  .mcard .field:first-of-type { margin-top: 12px; }
+  .mfoot { display: flex; justify-content: flex-end; gap: 10px; margin-top: 22px; }
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">m</div>
+  <h1>meetseen</h1>
+  <span class="badge" id="backend">…</span>
+  <button class="ghost" id="btn-settings" style="margin-left:8px;padding:6px 12px;font-size:13.5px">⚙︎ Ayarlar</button>
+</header>
+
+<main>
+  <!-- 1) DOSYA SEÇİMİ -->
+  <section class="card" id="sec-select">
+    <h2>Toplantı kaydını seç</h2>
+    <p class="hint">Teams kayıtları OneDrive'daki <b>Kayıtlar / Recordings</b> klasörüne iner (~400 MB/saat)
+       ve 120 gün sonra silinir — önce bilgisayara indir. MP4 / MOV.</p>
+    <button class="primary pick" id="btn-pick">📁 Dosya Seç…<small>macOS dosya penceresi açılır</small></button>
+    <div class="or">— veya —</div>
+    <div id="dropzone">Videoyu buraya sürükle&nbsp;·&nbsp;ya da <label for="file-input">bilgisayardan seç</label>
+      <input type="file" id="file-input" accept=".mp4,.mov,.m4v,.mkv" hidden>
+    </div>
+    <details>
+      <summary>yolu elle yapıştır</summary>
+      <div class="row grow" style="margin-top:8px">
+        <input type="text" id="path-input" placeholder="/Users/…/toplanti kaydi.mp4" spellcheck="false">
+        <button class="ghost" id="btn-path">Kullan</button>
+      </div>
+    </details>
+    <div id="file-card" hidden>
+      <span class="ic">🎬</span>
+      <div><b id="fc-name"></b><span id="fc-meta"></span></div>
+      <button class="ghost" id="btn-change">değiştir</button>
+    </div>
+  </section>
+
+  <!-- 2) AYARLAR -->
+  <section class="card" id="sec-settings" hidden>
+    <h2>Not ayarı</h2>
+    <label class="field">Başlık <span style="color:var(--muted);font-weight:400">(boş bırakılırsa dosya adından)</span></label>
+    <input type="text" id="title" placeholder="ör. Sprint 42 Planlama ve Mimari Kurulu">
+    <label class="field">Proje klasörü <span style="color:var(--muted);font-weight:400">(opsiyonel — kod &amp; dokümanlar notları anlamlandırır)</span></label>
+    <div class="row grow">
+      <input type="text" id="proj-input" placeholder="/Users/…/projem" spellcheck="false">
+      <button class="ghost" id="btn-proj">📁 Seç…</button>
+    </div>
+    <label class="switch"><input type="checkbox" id="keep" checked>
+      Ekran karelerini not klasörüne kaydet (slaytlar arşivlenir)</label>
+    <button class="primary big" id="btn-run">✨&nbsp; Notu Oluştur</button>
+  </section>
+
+  <!-- 3) AKIŞ -->
+  <section class="card" id="sec-run" hidden>
+    <h2 id="run-title">Not üretiliyor…</h2>
+    <p class="hint">Günlük sohbet ayıklanır, iş kısmı kalır — akışı aşağıdan izleyebilirsin.</p>
+    <div class="steps" id="steps"></div>
+    <div class="log" id="log"></div>
+    <div class="runfoot">
+      <span id="elapsed">00:00</span>
+      <button id="btn-cancel">■ İptal</button>
+    </div>
+  </section>
+
+  <!-- 4) SONUÇ -->
+  <section class="card" id="sec-result" hidden>
+    <div class="resulthead">
+      <h2 id="result-title">Not hazır 🎉</h2>
+      <span class="path" id="result-path"></span>
+      <button class="ghost" id="btn-open">📂 Klasörü Aç</button>
+      <button class="primary" id="btn-new">＋ Yeni Not</button>
+    </div>
+    <div id="errbox" class="errbox" hidden></div>
+    <div class="markdown" id="md"></div>
+  </section>
+
+  <!-- 5) GEÇMİŞ -->
+  <section class="card">
+    <h2>Geçmiş notlar</h2>
+    <ul id="hist"><li class="empty">henüz not yok</li></ul>
+  </section>
+</main>
+
+<footer>meetseen · her şey bu bilgisayarda işlenir · sunucuyu durdurmak için: <code>pkill -f webui.py</code></footer>
+<div id="toast"></div>
+
+<div id="modal" class="modal" hidden>
+  <div class="mcard">
+    <h2>Ayarlar</h2>
+    <p class="hint" style="margin-bottom:4px">Değişiklikler bir sonraki not üretiminde geçerli olur. Anahtar gibi gizli
+       bilgiler burada tutulmaz — <code>~/.meetseen.json</code>'a bakın.</p>
+
+    <label class="field">Transkript modeli (ses → yazı)</label>
+    <select id="s-whisper">
+      <option value="mlx-community/whisper-large-v3-mlx">whisper-large-v3 — en doğru (öntanımlı)</option>
+      <option value="mlx-community/whisper-large-v3-turbo">whisper-large-v3-turbo — en hızlı</option>
+      <option value="__custom__">Özel MLX model adı…</option>
+    </select>
+    <input type="text" id="s-whisper-custom" placeholder="mlx-community/…" spellcheck="false" hidden style="margin-top:8px">
+
+    <label class="field">LLM backend (notları üreten)</label>
+    <select id="s-backend">
+      <option value="auto">auto — uygun olanı bul</option>
+      <option value="claude">claude (Anthropic-uyumlu API)</option>
+      <option value="gemini">gemini</option>
+      <option value="ollama">ollama — %100 lokal</option>
+      <option value="mock">mock (test)</option>
+    </select>
+
+    <label class="field">Model adı <span style="color:var(--muted);font-weight:400">(seçilen backend için)</span></label>
+    <input type="text" id="s-model" placeholder="ör. glm-5.3 / gemini-3.8-flash / qwen3:30b-a3b" spellcheck="false">
+
+    <label class="field">Öntanımlı proje klasörü</label>
+    <div class="row grow">
+      <input type="text" id="s-project" placeholder="/Users/…/projem (boş = kapalı)" spellcheck="false">
+      <button class="ghost" id="s-btn-proj">📁</button>
+    </div>
+
+    <label class="switch" style="margin-top:14px"><input type="checkbox" id="s-thinking">
+      LLM düşünme modu (reasoning modellerde gerekiyorsa aç; normalde kapalı kalsın)</label>
+
+    <label class="field">Proje sözlüğü <span style="color:var(--muted);font-weight:400">(virgülle: API gateway, backlog…)</span></label>
+    <textarea id="s-glossary" placeholder="Whisper'ın fonetik yazdığı terimler buraya"></textarea>
+
+    <div class="mfoot">
+      <button class="ghost" id="s-cancel">Vazgeç</button>
+      <button class="primary" id="s-save">Kaydet</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+const STEPS = ["Ses", "Transkript", "Ekran · OCR", "İş / Sohbet", "Not Üretimi", "Kayıt"];
+let sel = null, runId = null, pollTimer = null, currentDir = null;
+
+function toast(msg) {
+  const t = $("#toast"); t.textContent = msg; t.classList.add("show");
+  clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove("show"), 3200);
+}
+async function api(url, opts) {
+  const r = await fetch(url, opts);
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.error || ("HTTP " + r.status));
+  return j;
+}
+const fmt = s => String(Math.floor(s / 60)).padStart(2, "0") + ":" + String(s % 60).padStart(2, "0");
+
+/* Not LLM üretimi olduğu için (proje içeriğinden sızan script/on* temizle) */
+function sanitizeHtml(html) {
+  const box = document.createElement("div");
+  box.innerHTML = html;
+  box.querySelectorAll("script,iframe,object,embed,style,form").forEach(el => el.remove());
+  box.querySelectorAll("*").forEach(el => {
+    [...el.attributes].forEach(a => {
+      const n = a.name.toLowerCase(), v = (a.value || "").trim().toLowerCase();
+      if (n.startsWith("on") || (n === "href" && v.startsWith("javascript:"))
+          || (n === "src" && v.startsWith("javascript:")))
+        el.removeAttribute(a.name);
+    });
+  });
+  return box.innerHTML;
+}
+
+/* ---- dosya seçimi ---- */
+function setFile(info) {
+  sel = info;
+  $("#fc-name").textContent = info.name;
+  $("#fc-meta").textContent = `${info.size_mb} MB · ${info.mtime}`;
+  $("#file-card").hidden = false;
+  $("#sec-settings").hidden = false;
+  $("#sec-select").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+$("#btn-pick").onclick = async () => {
+  const b = $("#btn-pick"); b.disabled = true; b.firstChild.textContent = "📁 Dosya penceresi açık… ";
+  try {
+    const j = await api("/api/pick", { method: "POST" });
+    if (j.cancelled) { /* kullanıcı vazgeçti */ }
+    else if (j.error) toast(j.error);
+    else setFile(j);
+  } catch (e) { toast("Dosya penceresi açılamadı — sürükle-bırakı kullan"); }
+  b.disabled = false; b.firstChild.textContent = "📁 Dosya Seç…";
+};
+function uploadFile(file) {
+  if (!/\.(mp4|mov|m4v|mkv)$/i.test(file.name)) return toast("Yalnız MP4 / MOV dosyaları");
+  const dz = $("#dropzone");
+  const xhr = new XMLHttpRequest();
+  xhr.open("POST", "/api/upload");
+  xhr.setRequestHeader("X-Filename", encodeURIComponent(file.name));
+  xhr.upload.onprogress = e => {
+    if (e.lengthComputable) dz.textContent = `⬆︎ yükleniyor… %${Math.round(e.loaded / e.total * 100)}`;
+  };
+  xhr.onload = () => {
+    dz.innerHTML = `Videoyu buraya sürükle&nbsp;·&nbsp;ya da <label for="file-input">bilgisayardan seç</label>`;
+    try { const j = JSON.parse(xhr.responseText); j.error ? toast(j.error) : setFile(j); }
+    catch { toast("Yükleme başarısız"); }
+  };
+  xhr.onerror = () => { dz.innerHTML = dz.innerHTML; toast("Yükleme başarısız"); };
+  xhr.send(file);
+}
+const dz = $("#dropzone");
+dz.addEventListener("dragover", e => { e.preventDefault(); dz.classList.add("drag"); });
+dz.addEventListener("dragleave", () => dz.classList.remove("drag"));
+dz.addEventListener("drop", e => {
+  e.preventDefault(); dz.classList.remove("drag");
+  if (e.dataTransfer.files.length) uploadFile(e.dataTransfer.files[0]);
+});
+$("#file-input").onchange = e => { if (e.target.files.length) uploadFile(e.target.files[0]); };
+$("#btn-path").onclick = async () => {
+  const p = $("#path-input").value.trim();
+  if (!p) return;
+  try { setFile(await api("/api/stat?path=" + encodeURIComponent(p))); }
+  catch { toast("Dosya bulunamadı — yolu kontrol et"); }
+};
+$("#btn-change").onclick = () => { sel = null; $("#file-card").hidden = true; $("#sec-settings").hidden = true; };
+
+/* ---- koşu ---- */
+function renderSteps(cur, status) {
+  const box = $("#steps");
+  if (!box.childElementCount)
+    box.innerHTML = STEPS.map(s => `<div class="step"><div class="b"></div><span>${s}</span></div>`).join("");
+  [...box.children].forEach((el, i) => {
+    el.className = "step" + (status === "done" || i + 1 < cur ? " done" : (i + 1 === cur && status === "running" ? " active" : ""));
+    el.querySelector(".b").textContent = (el.classList.contains("done")) ? "✓" : (i + 1);
+  });
+}
+function projBtnLabel() {
+  const v = $("#proj-input").value.trim();
+  const b = $("#btn-proj");
+  b.textContent = v ? ("✓ " + v.split("/").filter(Boolean).pop()) : "📁 Seç…";
+}
+$("#btn-proj").onclick = async () => {
+  const b = $("#btn-proj"); b.disabled = true; b.textContent = "📁 …";
+  try {
+    const j = await api("/api/pickfolder", { method: "POST" });
+    if (j.cancelled) { /* vazgeçildi */ }
+    else if (j.error) toast(j.error);
+    else $("#proj-input").value = j.path;
+  } catch (e) { toast("Klasör penceresi açılamadı — yolu elle yaz"); }
+  b.disabled = false;
+  projBtnLabel();
+};
+$("#proj-input").oninput = projBtnLabel;
+
+$("#btn-run").onclick = async () => {
+  const proj = $("#proj-input").value.trim();
+  try {
+    const j = await api("/api/run", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ path: sel.path, title: $("#title").value.trim(),
+                             keep_frames: $("#keep").checked, project: proj || null })
+    });
+    runId = j.run_id;
+    $("#sec-run").hidden = false;
+    $("#run-title").textContent = sel ? `“${$("#title").value.trim() || sel.name}” notlanıyor…` : "Not üretiliyor…";
+    $("#log").textContent = ""; renderSteps(0, "running");
+    $("#sec-run").scrollIntoView({ behavior: "smooth" });
+    pollTimer = setInterval(poll, 1000);
+  } catch (e) { toast(e.message); }
+};
+async function poll() {
+  let j; try { j = await api("/api/run/" + runId); } catch { return; }
+  $("#elapsed").textContent = fmt(j.elapsed);
+  renderSteps(j.step, j.status);
+  const log = $("#log");
+  log.textContent = j.lines.join("\n"); log.scrollTop = log.scrollHeight;
+  if (j.status === "running") return;
+  clearInterval(pollTimer);
+  if (j.status === "done" && j.output_dir) {
+    const name = j.output_dir.split("/").filter(Boolean).pop();
+    await showResult(name);
+  } else if (j.status === "cancelled") {
+    toast("İptal edildi");
+    $("#sec-run").hidden = true;
+  } else {
+    showResult(null, j.error || "Bilinmeyen hata — log'a bak");
+  }
+}
+$("#btn-cancel").onclick = () => api("/api/run/" + runId + "/cancel", { method: "POST" }).catch(() => {});
+
+/* ---- sonuç & geçmiş ---- */
+async function showResult(dirName, error) {
+  const sec = $("#sec-result");
+  sec.hidden = false; $("#errbox").hidden = !error;
+  if (error) {
+    $("#errbox").textContent = "✘ " + error;
+    $("#result-title").textContent = "Not üretilemedi";
+    $("#md").innerHTML = ""; $("#result-path").textContent = "";
+    sec.scrollIntoView({ behavior: "smooth" });
+    return;
+  }
+  currentDir = dirName;
+  const j = await api("/api/notes?dir=" + encodeURIComponent(dirName));
+  $("#result-title").textContent = "Not hazır 🎉";
+  $("#result-path").textContent = dirName;
+  $("#md").innerHTML = sanitizeHtml(marked.parse(j.markdown.replace(/^---\n[\s\S]*?\n---\n?/, "")));
+  sec.scrollIntoView({ behavior: "smooth" });
+  loadHistory();
+}
+$("#btn-open").onclick = () =>
+  api("/api/open", { method: "POST", headers: { "Content-Type": "application/json" },
+                     body: JSON.stringify({ dir: currentDir }) }).catch(e => toast(e.message));
+$("#btn-new").onclick = () => location.reload();
+
+async function loadHistory() {
+  const items = await api("/api/history").catch(() => []);
+  const ul = $("#hist");
+  if (!items.length) { ul.innerHTML = '<li class="empty">henüz not yok</li>'; return; }
+  ul.innerHTML = "";
+  for (const it of items) {
+    const li = document.createElement("li");
+    li.innerHTML = `<span class="op">📄</span><span class="nm"></span><span class="dt">${it.mtime}</span>`;
+    li.querySelector(".nm").textContent = it.name;
+    li.onclick = () => it.has_notes ? showResult(it.name) : toast("Bu klasörde NOT.md yok");
+    ul.appendChild(li);
+  }
+}
+
+/* ---- açılış ---- */
+api("/api/config").then(c => {
+  $("#backend").textContent = `${c.backend} · ${c.model || ""}`;
+}).catch(() => {});
+loadHistory();
+
+/* uygulama (meetseen.app) ?file= ile açılışta dosyayı iletebilir */
+(() => {
+  const f = new URLSearchParams(location.search).get("file");
+  if (!f) return;
+  api("/api/stat?path=" + encodeURIComponent(f))
+    .then(info => { if (info && info.name) setFile(info); })
+    .catch(() => toast("Uygulamadan iletilen dosya okunamadı"));
+})();
+
+/* ---- ayarlar ---- */
+const MODEL_KEYS = { claude: "claude_model", gemini: "gemini_model", ollama: "ollama_model" };
+async function openSettings() {
+  try {
+    const s = await api("/api/settings");
+    const ws = $("#s-whisper"), known = [...ws.options].map(o => o.value);
+    if (s.whisper_model && !known.includes(s.whisper_model)) {
+      ws.value = "__custom__";
+      $("#s-whisper-custom").hidden = false;
+      $("#s-whisper-custom").value = s.whisper_model;
+    } else {
+      ws.value = s.whisper_model || known[0];
+      $("#s-whisper-custom").hidden = true;
+    }
+    $("#s-backend").value = s.backend || "auto";
+    $("#s-model").value = s[MODEL_KEYS[s.backend] || "claude_model"] || "";
+    $("#s-project").value = s.project_dir || "";
+    $("#s-thinking").checked = s.claude_thinking === "enabled";
+    $("#s-glossary").value = (s.glossary || []).join(", ");
+  } catch (e) { toast(e.message); }
+  $("#modal").hidden = false;
+}
+$("#btn-settings").onclick = openSettings;
+$("#s-cancel").onclick = () => $("#modal").hidden = true;
+$("#modal").addEventListener("click", e => { if (e.target === $("#modal")) $("#modal").hidden = true; });
+$("#s-whisper").onchange = e => {
+  $("#s-whisper-custom").hidden = e.target.value !== "__custom__";
+};
+$("#s-btn-proj").onclick = async () => {
+  try {
+    const j = await api("/api/pickfolder", { method: "POST" });
+    if (j.cancelled) {}
+    else if (j.error) toast(j.error);
+    else $("#s-project").value = j.path;
+  } catch { toast("Klasör penceresi açılamadı"); }
+};
+$("#s-save").onclick = async () => {
+  const b = $("#s-backend").value;
+  const updates = {
+    backend: b,
+    whisper_model: $("#s-whisper").value === "__custom__"
+      ? $("#s-whisper-custom").value.trim() : $("#s-whisper").value,
+    project_dir: $("#s-project").value.trim(),
+    claude_thinking: $("#s-thinking").checked ? "enabled" : "disabled",
+    glossary: $("#s-glossary").value.split(",").map(x => x.trim()).filter(Boolean),
+  };
+  if (MODEL_KEYS[b]) updates[MODEL_KEYS[b]] = $("#s-model").value.trim();
+  if (!updates.whisper_model) delete updates.whisper_model;
+  try {
+    await api("/api/settings", { method: "POST",
+      headers: { "Content-Type": "application/json" }, body: JSON.stringify(updates) });
+    $("#modal").hidden = true;
+    toast("Ayarlar kaydedildi — sonraki notta geçerli");
+    api("/api/config").then(c => $("#backend").textContent = `${c.backend} · ${c.model || ""}`).catch(() => {});
+  } catch (e) { toast(e.message); }
+};
+
+/* ayarlardaki öntanımlı proje klasörünü koşu kartına doldur (elle değiştirilebilir) */
+api("/api/settings").then(s => {
+  if (s.project_dir && !$("#proj-input").value) {
+    $("#proj-input").value = s.project_dir;
+    projBtnLabel();
+  }
+}).catch(() => {});
+</script>
+</body>
+</html>

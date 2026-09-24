@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleExecutable</key>
+	<string>meetseen-app</string>
+	<key>CFBundleIdentifier</key>
+	<string>app.meetseen.mac</string>
+	<key>CFBundleName</key>
+	<string>meetseen</string>
+	<key>CFBundleDisplayName</key>
+	<string>meetseen</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>0.2.0</string>
+	<key>CFBundleVersion</key>
+	<string>1</string>
+	<key>LSMinimumSystemVersion</key>
+	<string>13.0</string>
+	<key>NSDesktopFolderUsageDescription</key>
+	<string>meetseen, toplantı kayıtlarını işlemek ve not klasörlerini göstermek için Desktop klasörüne erişir.</string>
+	<key>NSDocumentsFolderUsageDescription</key>
+	<string>meetseen, toplantı kayıtlarını işlemek için Documents klasörüne erişebilir.</string>
+	<key>NSHighResolutionCapable</key>
+	<true/>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsLocalNetworking</key>
+		<true/>
+	</dict>
+	<key>CFBundleDocumentTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeName</key>
+			<string>Toplantı Kaydı</string>
+			<key>CFBundleTypeRole</key>
+			<string>Alternate</string>
+			<key>LSItemContentTypes</key>
+			<array>
+				<string>public.movie</string>
+				<string>public.mpeg-4</string>
+			</array>
+			<key>CFBundleTypeExtensions</key>
+			<array>
+				<string>mp4</string>
+				<string>mov</string>
+				<string>m4v</string>
+				<string>mkv</string>
+			</array>
+		</dict>
+	</array>
+</dict>
+</plist>

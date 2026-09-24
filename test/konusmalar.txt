@@ -1,0 +1,7 @@
+TR1|Merhaba Ahmet, nasılsın? Eee, hafta sonu nasıl geçti? Biz eee şey yaptık, akşama yemek yedik, çok iyiydi ya. Hava da güzel değil mi, dışarı çıkmalı bir ara.
+EN1|Good morning everyone, can you hear me okay? Great, let's get started with the sprint review.
+TR2|Tamam o zaman. Bu sprintde asıl konu API gateway migration. Eee, backlogda otuz dört hikaye var, dördü blocker. Şey, authentication akışında regression riski var, onun için test kapsamını artırmamız lazım.
+EN2|Right. From the architecture side, I recommend a blue-green deployment strategy for zero downtime during the rollout. We should also decide on the feature flag tooling before the pilot starts.
+TR3|Ok, blue-green ile gidelim, bu bir karar olsun lütfen. Pilotu üçüncü çeyrekte Türkiye clusterında başlatıyoruz. Eee bir de, Ahmet credentialları hazırlayacak, cuma gününe kadar tamamlar mısın?
+EN3|Sure. One open question from my side: where should TLS termination live, at the gateway or at the service mesh? We need to resolve this before the pilot.
+TR4|Bunu konuşmamız lazım, açık soru olarak kalsın o zaman. Son olarak eski sistemin kapanması yıl sonunda olacak. Risk olarak, budget onayı hâlâ bekliyor, onu da not etsek iyi olur. Peki, kapatıyoruz, iyi çalışmalar!
