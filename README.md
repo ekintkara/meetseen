@@ -26,6 +26,36 @@ MP4 ─► ses ─► mlx-whisper (TR/EN, Apple Silicon'da hızlı) ─► ham t
       ─► NOT.md + transkriptler + sohbet-logu.md   (Markdown arşiv)
 ```
 
+## Nasıl çalışır?
+
+Kayıt verildiğinde 6 adım sırayla çalışır (arayüzdeki gösterge bu adımları izler):
+
+| Adım | Ne olur | Nerede |
+|---|---|---|
+| **1 · Ses** | ffmpeg ses kanalını çıkarır (16 kHz mono) | 💻 Mac'inde |
+| **2 · Transkript** | mlx-whisper (`whisper-large-v3`, MLX) konuşmayı yazar; TR/EN karışık konuşur, dil sabit Türkçe bırakılır (karışıkta daha temiz) | 💻 Mac'inde |
+| **3 · Ekran · OCR** | Videodan 2 saniyede bir kare alınır, pHash ile aynı kareler elenir (~800 kare → ~60 tekil), kalanlar Apple Vision ile okunur (slaytlar, terminaller, Azure DevOps panoları) | 💻 Mac'inde |
+| **4 · İş / Sohbet** | LLM her bölümü **İŞ / SOHBET / BELİRSİZ** olarak sınıflandırır: selamlaşma, hava, şakalaşma atılır; emin olunmayan **asla atılmaz**. Dolgular ("eee", "şey") temizlenir ama karar anlamındaki "ok, bunu yapalım" korunur. Whisper'ın fonetik yazdığı terimler ("apı gata" → "API gateway") sözlük + proje bağlamıyla düzeltilir | LLM |
+| **5 · Not üretimi** | Temiz iş transkripti + ekranda gösterilenler (+ istersen proje bağlamı) yapılandırılmış nota dönüşür: yönetici özeti, kararlar, aksiyonlar (sahip/termin/zaman/alıntı), açık sorular, riskler, ekran içerikleri. Uydurma yasaktır — her madde transkriptten alıntıyla gelir | LLM |
+| **6 · Kayıt** | Sonuç Markdown arşivine yazılır | 💻 Mac'inde |
+
+**Proje bağlamı (opsiyonel):** `--project` ile proje klasörü verirsen meetseen
+dizin ağacı + dokümanlar (en yeniden eskiye) + kod sembol adlarından kompakt
+bir bağlam çıkarır. "1703 ticket'ı", "Agenda modülü" gibi referanslar bu
+sayede çözümlenir; bağlam yalnızca anlamlandırma için kullanılır — transkripte
+olmayan içerik nota girmez.
+
+**Gizlilik / veri akışı:** ses ve görüntü **hiçbir yere gitmez**; Whisper ve
+OCR tamamen cihaz içi. API (`claude`/`gemini`) backend'lerinde yalnızca
+**transkript + OCR metni** (+ verdiysen proje bağlamı) gönderilir. `ollama`
+backend'inde hiçbir veri makineni terk etmez.
+
+**Çıktılar** (`meetseen-cikti/TARIH-baslik/`): `NOT.md` (ana not) ·
+`transkript-ham.txt` · `transkript-temiz.txt` (iş kısmı) · `sohbet-logu.md`
+(atılan sohbetin denetim kaydı — yanlışlıkla atılan iş içeriğini geri
+bulman için) · `not.json` (yapılandırılmış veri) · `kareler/` (slayt
+görüntüleri).
+
 ## En kolay kullanım
 
 **Kurulum (bir kere):**
@@ -73,19 +103,59 @@ Terminal'den doğrudan da çalıştırılabilir:
 ```
 
 Çıktı: `meetseen-cikti/YYYY-AA-GG_SSDD-baslik/NOT.md` (+ ham/temiz transkript,
-sohbet logu, `not.json`, `--keep-llm` yerine kareler kısayolla otomatik kaydedilir).
+sohbet logu, `not.json`; "ekran karelerini kaydet" açıksa `kareler/`).
 Bu klasörü Obsidian vault'u olarak açarsan tüm notların aranabilir olur.
 
 ## Kurulum
 
+**Gereksinimler:** macOS 13+ · Apple Silicon (M1/M2/M3/M4/M5) · ~5 GB boş disk
+(Whisper modeli + bağımlılıklar) · bir LLM erişimi (aşağıda).
+
+**1) Repoyu indir ve kurulum betiğini çalıştır:**
+
 ```bash
-cd ~/Desktop/meetseen
-python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
+git clone https://github.com/ekintkara/meetseen.git
+cd meetseen
+./install.sh            # ffmpeg + Xcode CLT kontrolü, .venv, bağımlılıklar
+./install.sh --app      # istersen meetseen.app üretir → /Applications
 ```
 
-Bağımlılıklar (eksikse): `brew install ffmpeg` ve `xcode-select --install`
-(Swift derleyicisi, Vision OCR için). Vision OCR aracı ilk çalıştırmada
-otomatik derlenir.
+Elle kurulum tercih edersen: `brew install ffmpeg`, `xcode-select --install`,
+`python3 -m venv .venv && .venv/bin/pip install -r requirements.txt`.
+(Vision OCR aracı ilk koşuda otomatik derlenir.)
+
+**2) LLM anahtarını ayarla** — `~/.meetseen.json` (repo dışında, kişisel):
+
+```json
+{
+  "backend": "claude",
+  "claude_model": "glm-5.3",
+  "anthropic_base_url": "https://api.z.ai/api/anthropic",
+  "anthropic_auth_token": "…anahtarın…"
+}
+```
+
+- Anthropic-uyumlu herhangi bir gateway/model bu şekilde çalışır (ör. Z.ai).
+- Anthropic API doğrudan: `anthropic_auth_token` yerine `ANTHROPIC_API_KEY`
+  ortam değişkeni de yeterli.
+- Gemini: `"backend": "gemini"` + `GEMINI_API_KEY` (yalnız ücretli katman).
+- %100 lokal: Ollama kuruluysa `"backend": "ollama"` (bkz. alttaki tablo).
+- Anahtarsız da deneyebilirsin: `mock` backend sahte not üretir, akışı test eder.
+
+Model ve backend seçimini sonra arayüzdeki **⚙︎ Ayarlar** ekranından da
+değiştirebilirsin (anahtar hariç).
+
+**3) Doğrula** — risksiz hızlı test (LLM'siz, sentetik video):
+
+```bash
+.venv/bin/python meetseen.py test/test.mp4 --backend mock
+# ya da gerçek deneme için kendi kaydını ver:
+.venv/bin/python meetseen.py toplantım.mp4
+```
+
+İlk gerçek koşuda Whisper modeli iner (~3 GB, bir kere) ve Vision OCR aracı
+derlenir. Sonrası: `meetseen.app`'e çift tıkla (veya `meetseen.command`,
+veya CLI) — bkz. "En kolay kullanım".
 
 ## Diğer kullanımlar
 
@@ -134,8 +204,7 @@ Anthropic-uyumlu servisler için (ör. Z.ai).
 
 `claude_thinking` reasoning (düşünen) modeller içindir: `"disabled"` (öntanımlı)
 modelin tüm yanıt bütçesini düşünmeye harcayıp cevabı boş vermesini önler;
-modelde düşünme istersen `"enabled"` yap. `anthropic_base_url` gateway kullanan
-Anthropic-uyumlu servisler için (ör. Z.ai).
+modelde düşünme istersen `"enabled"` yap.
 
 | Backend | Kurulum | Veri nereye gider | Not kalitesi (TR/EN karışık) |
 |---|---|---|---|
@@ -163,7 +232,8 @@ tutulmaz — `~/.meetseen.json`'a elle yazılır.
 
 ## 24 GB RAM (M5 Pro) notları
 
-- **STT:** `whisper-large-v3-turbo` ~2 GB bellek, 1 saat ses ≈ 2-4 dk. ✓
+- **STT:** `whisper-large-v3` (öntanımlı) ~3 GB bellek, 1 saat ses ≈ 4-5 dk;
+  `turbo` hızlı alternatif (1 saat ≈ 1 dk, biraz daha az isabetli). ✓
 - **Lokal LLM:** `qwen3:30b-a3b` (MoE, ~18 GB) veya `gemma3:27b` sığar ama
   not üretimi yavaşlar (1 saat toplantı ≈ 10-25 dk). 27B altı modeller
   Türkçe not kalitesini belirgin düşürür — mümkünse API backend'i kullan.
@@ -183,7 +253,8 @@ tutulmaz — `~/.meetseen.json`'a elle yazılır.
 
 - **Arayüz açılmadı** → `tail -5 /tmp/meetseen-web.log`'a bak; port çakışması
   yoksa sunucu zaten çalışıyordur (badge'de backend görünüyorsa sorun değil).
-- **İlk çalıştırma yavaş:** Whisper modeli iniyor (~1.6 GB, bir kere).
+- **İlk çalıştırma yavaş:** Whisper modeli iniyor (~3 GB, bir kere) ve Vision
+  OCR aracı derleniyor.
 - **"kullanılabilir LLM backend'i bulunamadı"** → Ollama kur veya API
   anahtarı tanımla (üstteki tablo).
 - **Not yalnızca ekran (OCR) içeriğinden üretildi, "transkript boş" dedi:**
