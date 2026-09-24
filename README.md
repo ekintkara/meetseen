@@ -81,13 +81,11 @@ görüntüleri).
 ./install.sh --app    # ayrıca meetseen.app üretir ve /Applications'a kopyalar
 ```
 
-**Günlük kullanım** — üç giriş yolu:
+**Günlük kullanım** — iki giriş yolu:
 
 1. **meetseen.app** (/Applications veya klasörde): çift tıkla → pencere açılır,
    sunucuyu kendisi başlatır; videoyu uygulama ikonuna bırakabilirsin.
-2. **`meetseen.command`** (masaüstü kısayolu): çift tıkla → tarayıcıda arayüz
-   açılır (sunucu arka planda çalışır, yalnız bu makineden erişilebilir).
-3. **Terminal:** `.venv/bin/python meetseen.py toplantı.mp4` (bkz. "Diğer kullanımlar")
+2. **Terminal:** `.venv/bin/python meetseen.py toplantı.mp4` (bkz. "Diğer kullanımlar")
 
 Arayüz akışı:
 
@@ -106,11 +104,10 @@ Arayüz akışı:
 5. **Sonuç** — NOT.md tarayıcıda önizlenir; 📂 Klasörü Aç ile Finder'da açılır.
 6. **Geçmiş notlar** — eski notlar listeden tıklayınca geri gelir.
 
-Sunucuyu durdurmak için: `pkill -f webui.py` (`.command` yolunda Terminal
-kapansa da sunucu yaşamaya devam eder; `meetseen.app` ise çıkışta **kendi
-başlattığı** sunucuyu kapatır). meetseen.app pencerede "sunucu başlatılıyor"
-dediyse: klasör seçimi sorulduğunda bu repoyu göster, ya da menüden
-**meetseen ▸ Klasörü Yeniden Seç…** (⌘R).
+meetseen.app sunucuyu kendi yönetir: çıkışta **kendi başlattığı** sunucuyu
+kapatır. Pencerede "sunucu başlatılıyor" takılırsa: **meetseen ▸ Klasörü
+Yeniden Seç…** (⌘R) ile repoyu yeniden göster. (Geliştirme: `webui.py`'yi elle
+çalıştırıyorsan durdurmak `pkill -f webui.py`.)
 
 Terminal'den doğrudan da çalıştırılabilir:
 
@@ -170,8 +167,8 @@ değiştirebilirsin (anahtar hariç).
 ```
 
 İlk gerçek koşuda Whisper modeli iner (~3 GB, bir kere) ve Vision OCR aracı
-derlenir. Sonrası: `meetseen.app`'e çift tıkla (veya `meetseen.command`,
-veya CLI) — bkz. "En kolay kullanım".
+derlenir. Sonrası: `meetseen.app`'e çift tıkla (veya CLI) — bkz. "En kolay
+kullanım".
 
 ## Diğer kullanımlar
 

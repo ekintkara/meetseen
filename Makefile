@@ -7,9 +7,10 @@ VER := $(shell plutil -extract CFBundleShortVersionString raw app/Info.plist)
 app:
 	cd app && swift build -c release
 	rm -rf $(APP)
-	mkdir -p $(APP)/Contents/MacOS
+	mkdir -p $(APP)/Contents/MacOS $(APP)/Contents/Resources
 	cp app/.build/release/meetseen-app $(APP)/Contents/MacOS/
 	cp app/Info.plist $(APP)/Contents/
+	cp app/AppIcon.icns $(APP)/Contents/Resources/
 	printf 'APPL????' > $(APP)/Contents/PkgInfo
 	codesign --force --sign - $(APP)
 	@echo "✔ $(APP) hazır — 'open $(APP)'"

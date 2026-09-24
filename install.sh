@@ -59,7 +59,7 @@ Kurulum tamam. Sonraki adımlar:
        {"backend":"claude","claude_model":"...","anthropic_auth_token":"...",
         "anthropic_base_url":"https://api.z.ai/api/anthropic"})
      veya arayüzdeki ⚙︎ Ayarlar ekranından model seçimi yapılabilir.
-  2) Başlatma: ./meetseen.command  (veya --app kullandıysan /Applications/meetseen.app)
+  2) Başlatma: meetseen.app  (--app kullandıysan /Applications/meetseen.app)
   3) İlk çalıştırmada Whisper modeli iner (~3 GB, bir kere).
 
 BİTTİ

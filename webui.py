@@ -3,7 +3,8 @@
 """meetseen web arayüzü — yerel sunucu (yalnız 127.0.0.1, stdlib).
 
 Pipeline'a dokunmaz: meetseen.py'yi alt süreç olarak çalıştırır ve
-stdout'unu akıtarak ilerlemeyi sunar. Çift tık girişi: meetseen.command.
+stdout'unu akıtarak ilerlemeyi sunar. Giriş: meetseen.app (veya geliştirme
+için elle çalıştırma).
 """
 import json
 import os
