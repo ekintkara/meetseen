@@ -19,12 +19,18 @@ from urllib.parse import urlparse, parse_qs, unquote
 
 BASE = Path(__file__).resolve().parent
 UI = BASE / "ui"
-OUT_ROOT = BASE / "meetseen-cikti"
-UP_DIR = BASE / "yuklenenler"
 PY = BASE / ".venv" / "bin" / "python"
 URL_FILE = Path("/tmp/meetseen-web.url")
 ALLOWED_SUFFIX = {".mp4", ".mov", ".m4v", ".mkv"}
 MAX_UPLOAD = 2 * 1024 ** 3
+
+# DMG dağıtımında kaynaklar .app paketi içindedir; çıktılar/kullanıcı verisi
+# pakete DEĞİL ev dizinine yazılmalı (paket /Applications'ta salt-okunur olabilir).
+IN_APP_BUNDLE = "Contents/Resources" in str(BASE)
+OUT_ROOT = (Path.home() / "Documents/meetseen-cikti" if IN_APP_BUNDLE
+            else BASE / "meetseen-cikti")
+UP_DIR = (Path.home() / "Library/Application Support/meetseen/yuklenenler"
+          if IN_APP_BUNDLE else BASE / "yuklenenler")
 
 STEP_RE = re.compile(r"\[(\d)/6\]")
 DONE_RE = re.compile(r"✔ Bitti → (.+)")
@@ -81,6 +87,8 @@ def start_run(path, title, keep_frames, project=""):
             return None, "Zaten bir koşu sürüyor — önce bitmesini veya iptalini bekle."
         run = Run(path, title, keep_frames, project)
         cmd = [str(PY), "meetseen.py", str(path)]
+        if IN_APP_BUNDLE:
+            cmd += ["--out", str(OUT_ROOT)]   # paket içine yazmasın
         if title:
             cmd += ["--title", title]
         if keep_frames:

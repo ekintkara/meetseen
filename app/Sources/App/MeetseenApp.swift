@@ -66,7 +66,39 @@ final class ServerManager: ObservableObject {
         }.resume()
     }
 
+    /// Gömülü dağıtım (DMG): Resources/appfiles içinde kaynaklar + venv var mı?
+    private func bundledAppFiles() -> URL? {
+        guard let res = Bundle.main.resourceURL else { return nil }
+        let af = res.appendingPathComponent("appfiles")
+        guard FileManager.default.fileExists(atPath: af.appendingPathComponent("webui.py").path),
+              FileManager.default.fileExists(atPath: af.appendingPathComponent("venv-fixup.sh").path) else {
+            return nil
+        }
+        return af
+    }
+
+    /// venv'in sembolik bağlantılarını bu makinedeki paket konumuna uyarlar (bir kere).
+    private func fixupVenv(_ appfiles: URL) {
+        let p = Process()
+        p.executableURL = URL(fileURLWithPath: "/bin/sh")
+        p.arguments = [appfiles.appendingPathComponent("venv-fixup.sh").path, appfiles.path]
+        try? p.run()
+        p.waitUntilExit()
+    }
+
     private func spawnServer() {
+        // 1) gömülü dağıtım (DMG) — kullanıcıdan klasör istemez
+        if let af = bundledAppFiles() {
+            fixupVenv(af)
+            let py = af.appendingPathComponent(".venv/bin/python")
+            if FileManager.default.isExecutableFile(atPath: py.path) {
+                launchServer(python: py, root: af)
+                return
+            }
+            state = .failed("Gömülü Python ortamı hazırlanamadı (venv-fixup)")
+            return
+        }
+        // 2) geliştirme modu — repodaki .venv
         guard let root = ProjectRoot.resolve() else {
             state = .failed("meetseen klasörü seçilemedi")
             return
@@ -76,8 +108,12 @@ final class ServerManager: ObservableObject {
             state = .failed("Klasörde .venv yok — önce Terminal'de ./install.sh çalıştır:\n\(root.path)")
             return
         }
+        launchServer(python: py, root: root)
+    }
+
+    private func launchServer(python: URL, root: URL) {
         let p = Process()
-        p.executableURL = py
+        p.executableURL = python
         p.arguments = [root.appendingPathComponent("webui.py").path]
         // cwd Desktop'ta OLMASIN: Python açılıştaki getcwd'de TCC izni bekleyip
         // bloklanıyor. webui.py BASE'i __file__'dan çözer — cwd gerekmez.

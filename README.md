@@ -9,6 +9,22 @@
 ⚠️ **Yalnız macOS (Apple Silicon):** ekran okuma Apple Vision'a, transkript
 MLX'e bağlı — Linux/Windows şimdilik kapsam dışı.
 
+## İndir
+
+**[Son sürüm DMG](https://github.com/ekintkara/meetseen/releases/latest)** —
+uygulamanın içinde Python + tüm ML bağımlılıkları gömülüdür (~486 MB);
+kurulumda yalnız sürükle-bırak gerekir.
+
+1. DMG'yi aç → **meetseen.app'i Applications klasörüne sürükle**
+2. İlk açılışta Gatekeeper uyarısı çıkarsa (uygulama community imzalı değil):
+   uygulamaya **sağ tıkla → Aç → Aç** — bu, tek seferlik onaydır
+3. Desktop/Documents erişimi için çıkan izin isteğine **İzin Ver**
+4. İlk not üretiminde Whisper modeli iner (~3 GB, bir kere)
+
+Gereksinimler: Apple Silicon Mac (macOS 13+) · [Homebrew](https://brew.sh)
+üzerinden `ffmpeg` (ilk koşuda eksikse uygulama söyler) · bir LLM erişimi
+(kurulum bölümünde). Kaynaktan kurulum için: `./install.sh`.
+
 Teams toplantı kaydını (MP4) sürükle → **sadece iş kısmını** içeren yapılandırılmış
 notlar çıksın: yönetici özeti, kararlar, aksiyonlar (sahip + termin), açık
 sorular, riskler ve **ekranda gösterilenler**. Günlük sohbet ayıklanır ama

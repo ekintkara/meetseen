@@ -27,3 +27,8 @@ app/.swiftpm/
 *.log
 .playwright-mcp/
 not-dump.txt
+
+# DMG derleme çıktıları
+dist/
+dist-root/
+*.dmg
