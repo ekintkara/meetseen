@@ -62,7 +62,10 @@ final class ServerManager: ObservableObject {
         var req = URLRequest(url: url.appendingPathComponent("api/config"))
         req.timeoutInterval = 1.5
         URLSession.shared.dataTask(with: req) { _, resp, _ in
-            done((resp as? HTTPURLResponse)?.statusCode == 200)
+            let ok = (resp as? HTTPURLResponse)?.statusCode == 200
+            // @Published ana iş parçacığında güncellenmeli — yoksa arayüz
+            // "sunucu başlatılıyor"da takılı kalır (URLSession arka planda döner).
+            DispatchQueue.main.async { done(ok) }
         }.resume()
     }
 
